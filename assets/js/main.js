@@ -138,13 +138,14 @@
   /* ───── the juggle ───── */
   var home = $('#home'), pin = $('#homePin'), jug = $('#jug'), orbitEl = $('.orbit'), balls = $$('#balls .ball'), slots = $$('.slot'),
     ledeW = $('#ledeW'), doors = $('#doors'), arc = $('.arc'), jugStop = $('#jugStop');
-  var J = { t: 0, paused: false, hover: false, geo: null, p: 0 };
+  var J = { t: 0, paused: false, hover: false, geo: null, p: 0, h: 0, off: false };
   function measureJuggle() {
     var keep = doors.style.transform; doors.style.transform = 'none';
     var pr = pin.getBoundingClientRect(), o = orbitEl.getBoundingClientRect();
     J.geo = { cx: o.left + o.width / 2 - pr.left, cy: o.top + o.height / 2 - pr.top, rx: o.width / 2, ry: o.height / 2,
       slots: slots.map(function (s) { var r = s.getBoundingClientRect(); return { x: r.left + r.width / 2 - pr.left, y: r.top + r.height / 2 - pr.top, d: r.width }; }),
       d: balls[0].offsetWidth };
+    J.h = home.offsetHeight;
     doors.style.transform = keep;
   }
   jug.addEventListener('pointerenter', function () { J.hover = true; });
@@ -152,7 +153,9 @@
   jugStop.addEventListener('click', function () { J.paused = !J.paused; jugStop.textContent = J.paused ? 'Juggle again' : 'Stop the juggle'; });
   function drawJuggle(dt) {
     if (!J.geo) return;
-    var max = home.offsetHeight - window.innerHeight, p = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0; J.p = p;
+    if (window.scrollY > J.h + 40) { J.off = true; return; }      // home is off screen: nothing to move
+    J.off = false;
+    var max = J.h - window.innerHeight, p = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0; J.p = p;
     var s = smooth((p - 0.1) / 0.5);
     if (!J.paused && !J.hover && !REDUCED && s < 1) J.t += dt * (1 - s);
     var g = J.geo, n = balls.length;
@@ -176,10 +179,10 @@
 
   /* ───── the cloud (plain WebGL, no library) ───── */
   function initCloud() {
-    var canvas = $('#cloud'), gl = null, N = 16000, VER = '6';
+    var canvas = $('#cloud'), gl = null, N = 16000, VER = '7';
     try { gl = canvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'high-performance' }); } catch (e) {}
     if (!gl) return null;
-    var PR = Math.min(window.devicePixelRatio || 1, 2);
+    var PR = 1;
     var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     var shapes = {};                                           // name -> { pos, col, pb, cb }
     function make(name, fn) {
@@ -272,7 +275,7 @@
       return { el: el, disc: el.querySelector('.disc'), shape: el.getAttribute('data-shape'), base: el.getAttribute('data-shape'), side: el.getAttribute('data-side') || 'right',
         scale: parseFloat(el.getAttribute('data-scale')) || 1, turn: parseFloat(el.getAttribute('data-turn')) || 0, top: 0, bottom: 0 };
     });
-    var S = { W: 1, H: 1, pair: -2, mix: 0, target: 0, mx: 0, my: 0, shakeAt: -1e9, pluckAt: -1e9, live: true, local: null, k: 0, count: N, size: 2.2, dirty: true, vh: 1, vw: 1 };
+    var S = { busyAt: 0, W: 1, H: 1, pair: -2, mix: 0, target: 0, mx: 0, my: 0, shakeAt: -1e9, pluckAt: -1e9, live: true, local: null, k: 0, count: N, size: 2.2, dirty: true, vh: 1, vw: 1 };
     var P = new Float32Array(16), MV = new Float32Array(16); MV[15] = 1;
 
     /* figures sampled from pictures arrive one small file at a time, in the order the page needs them */
@@ -280,7 +283,7 @@
       var p = new Int16Array(bufr, 0, N * 3), c = new Uint8Array(bufr, N * 6, N * 3), pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
       for (var i = 0; i < N * 3; i++) { pos[i] = p[i] / 8000; col[i] = c[i] / 255; }
       shapes[name] = { pos: pos, col: col }; if (ok) upload(shapes[name]);
-      S.pair = -2; S.dirty = true;                             // if it is on screen now, show it
+      S.pair = -2; S.dirty = true; S.busyAt = performance.now();  // if it is on screen now, show it
     }
     var want = [], asked = {};
     stages.forEach(function (s) { if (!shapes[s.shape] && want.indexOf(s.shape) < 0) want.push(s.shape); });
@@ -306,6 +309,8 @@
     }
     function measure() {
       S.W = window.innerWidth; S.H = window.innerHeight;
+      // full sharpness on phones, tablets and laptops; only very large retina screens (5K and up) are held to about 7 million pixels
+      PR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(7e6 / (S.W * S.H))));
       var w = Math.round(S.W * PR), h = Math.round(S.H * PR);
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       gl.viewport(0, 0, w, h);
@@ -334,10 +339,15 @@
     window.addEventListener('pointermove', function (e) { S.mx = e.clientX / S.W * 2 - 1; S.my = e.clientY / S.H * 2 - 1; }, { passive: true });
     document.addEventListener('visibilitychange', function () { S.live = !document.hidden; if (S.live) { last = performance.now(); requestAnimationFrame(frame); } });
 
-    var rx = 0, ry = 0, px = 0, py = 0, ps = 1, pa = 0, vis = 1, last = performance.now(), blank = false;
+    var rx = 0, ry = 0, px = 0, py = 0, ps = 1, pa = 0, vis = 1, last = performance.now(), blank = false, lastY = -1, skip = false, prevRaf = 0;
     function frame(now) {
       if (!S.live) return;
       requestAnimationFrame(frame);
+      // while you scroll or a figure is changing, every frame is drawn; when all is still, every second one is enough
+      var sy = window.scrollY, busy = sy !== lastY || now - S.busyAt < 900 || (!J.off && !J.paused);
+      if (sy !== lastY) { lastY = sy; S.busyAt = now; }
+      var fast = now - prevRaf < 12; prevRaf = now;            // a 120Hz screen: when all is still, 60 pictures a second look the same
+      if (!busy && fast && (skip = !skip)) return;
       var dt = Math.min(0.05, (now - last) / 1000); last = now;
       drawJuggle(dt);
       if (!ok) return;
@@ -390,11 +400,11 @@
     requestAnimationFrame(frame);
     return {
       theme: theme, measure: measure,
-      shake: function () { S.shakeAt = performance.now(); }, pluck: function () { S.pluckAt = performance.now(); },
+      shake: function () { S.shakeAt = performance.now(); S.busyAt = S.shakeAt + 6000; }, pluck: function () { S.pluckAt = performance.now(); S.busyAt = S.pluckAt + 5000; },
       show: function (name) {                                  // morph the current stage to another figure
         var s = stages[S.k]; if (s.shape === name) return;
         ask(name).catch(function () {});
-        S.local = { k: S.k, t0: performance.now(), from: s.shape }; s.shape = name; S.mix = 0; S.dirty = true;
+        S.local = { k: S.k, t0: performance.now(), from: s.shape }; s.shape = name; S.mix = 0; S.dirty = true; S.busyAt = performance.now() + 1500;
       }
     };
   }
@@ -407,7 +417,7 @@
   secs.forEach(function (s, i) { s.sub = SUB[s.el.id] || (i && secs[i - 1].ch === s.ch && !s.wall ? secs[i - 1].sub : ''); });
   var chap = {}; ORDER.forEach(function (c) { chap[c] = { top: 0, bottom: 0 }; });
   var rail = $('#railFill'), crumb = $('#crumb'), trailT = $('#trailT'), stops = $$('.trail-s'), yearsEl = $('.years'), curCh = '', curSub = null, Y = { top: 0, h: 1 };
-  var river = $('#river'), rBg = $('#river-bg'), rFg = $('#river-fg'), rDot = $('#river-dot'), rHalo = $('#river-halo'), R = { len: 0, ys: [], n: 0 };
+  var river = $('#river'), rBg = $('#river-bg'), rFg = $('#river-fg'), rDotG = $('#river-bead'), R = { len: 0, ys: [], xs: [], ls: [], real: 0, last: -1, on: -1, d: '', W: 0 };
   function measureSecs() {
     var y = window.scrollY;
     secs.forEach(function (s) { var r = s.el.getBoundingClientRect(); s.top = r.top + y; s.bottom = r.bottom + y; });
@@ -424,28 +434,41 @@
       return { x: (left ? (narrow ? 0.04 : 0.045) : (narrow ? 0.96 : 0.955)) * W, top: r.top + y, bottom: r.bottom + y, band: !stage };
     });
     if (st.length < 2) return;
-    // it runs straight down one margin, and crosses to the other side only in the gap between two sections
-    var d = 'M' + st[0].x + ' ' + (st[0].top + vh * 0.3), cx = st[0].x;
+    // it runs straight down one margin, and crosses to the other side only in the gap between two sections.
+    // The points along it are worked out here in plain arithmetic, so scrolling never has to ask the browser to measure the path.
+    var x0 = st[0].x, y0 = st[0].top + vh * 0.3, d = 'M' + x0 + ' ' + y0, cx = x0, cy = y0;
+    var xs = [x0], ys = [y0], ls = [0], len = 0;
+    function to(px, py) { len += Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy)); cx = px; cy = py; xs.push(px); ys.push(py); ls.push(len); }
     for (var i = 1; i < st.length; i++) {
       var b = st[i], yb = b.top, g = (b.band || st[i - 1].band) ? Math.min(vh * 0.07, 60) : vh * 0.16;
       if (Math.abs(b.x - cx) < 1) continue;
-      d += ' L' + cx + ' ' + (yb - g) + ' C' + cx + ' ' + yb + ' ' + b.x + ' ' + yb + ' ' + b.x + ' ' + (yb + g); cx = b.x;
+      var ax = cx, ay = yb - g, by = yb + g;
+      d += ' L' + ax + ' ' + ay + ' C' + ax + ' ' + yb + ' ' + b.x + ' ' + yb + ' ' + b.x + ' ' + by;
+      to(ax, ay);
+      for (var k = 1; k <= 28; k++) {                          // the S-shaped crossing, as 28 short straight pieces
+        var t = k / 28, u = 1 - t, w1 = 3 * u * u * t, w2 = 3 * u * t * t, w0 = u * u * u, w3 = t * t * t;
+        to((w0 + w1) * ax + (w2 + w3) * b.x, w0 * ay + (w1 + w2) * yb + w3 * by);
+      }
     }
-    d += ' L' + cx + ' ' + (st[st.length - 1].top + vh * 0.5);
+    var endY = st[st.length - 1].top + vh * 0.5; d += ' L' + cx + ' ' + endY; to(cx, endY);
+    if (d === R.d && W === R.W) return;                        // nothing moved: leave the drawn thread alone
+    R.d = d; R.W = W; R.xs = xs; R.ys = ys; R.ls = ls; R.len = len;
     rBg.setAttribute('d', d); rFg.setAttribute('d', d);
-    R.len = rFg.getTotalLength(); R.n = 900; R.ys = [];
-    for (var k = 0; k <= R.n; k++) R.ys.push(rFg.getPointAtLength(R.len * k / R.n).y);
-    rFg.style.strokeDasharray = R.len; rFg.style.strokeDashoffset = R.len;
+    R.real = rFg.getTotalLength() || len;
+    rFg.style.strokeDasharray = R.real; rFg.style.strokeDashoffset = R.real; R.last = -1;
   }
   function drawRiver(mid) {
     if (!R.len) return;
-    var ys = R.ys, lo = 0, hi = R.n;                           // how much thread reaches the middle of the screen
-    if (mid <= ys[0]) hi = 0; else if (mid >= ys[hi]) lo = hi;
+    var ys = R.ys, n = ys.length - 1, lo = 0, hi = n;          // how much thread reaches the middle of the screen
+    if (mid <= ys[0]) hi = 0; else if (mid >= ys[n]) lo = n;
     else while (hi - lo > 1) { var m = (lo + hi) >> 1; if (ys[m] < mid) lo = m; else hi = m; }
-    var f = hi === lo ? lo : lo + (mid - ys[lo]) / ((ys[hi] - ys[lo]) || 1), L = R.len * f / R.n, pt = rFg.getPointAtLength(L);
-    rFg.style.strokeDashoffset = R.len - L;
-    rDot.setAttribute('cx', pt.x); rDot.setAttribute('cy', pt.y); rHalo.setAttribute('cx', pt.x); rHalo.setAttribute('cy', pt.y);
-    var on = L > 1 && L < R.len - 1 ? 1 : 0; rDot.style.opacity = on; rHalo.style.opacity = on * 0.28;
+    var f = hi === lo ? 0 : (mid - ys[lo]) / ((ys[hi] - ys[lo]) || 1), L = R.ls[lo] + (R.ls[hi] - R.ls[lo]) * f;
+    if (Math.abs(L - R.last) < 0.5) return;
+    R.last = L;
+    var x = R.xs[lo] + (R.xs[hi] - R.xs[lo]) * f, y = ys[lo] + (ys[hi] - ys[lo]) * f;
+    rFg.style.strokeDashoffset = R.real - L * R.real / R.len;
+    rDotG.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')');
+    var on = L > 1 && L < R.len - 1 ? 1 : 0; if (on !== R.on) { R.on = on; rDotG.style.opacity = on; }
   }
   var ticking = false;
   function onScroll() {
