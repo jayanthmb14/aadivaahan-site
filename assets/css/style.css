@@ -463,7 +463,20 @@ figcaption{font-size:.74rem;color:var(--dim);margin-top:6px;line-height:1.4}
 .band .two>div>p:not(:last-child){margin-bottom:.95em}
 
 /* short laptop screens: keep a whole section inside one screen */
-@media (min-width:901px) and (max-height:760px){
+@media (min-width:901px) and (max-height:860px){
+  .leg{max-width:215px}
+  #footware .h.big{font-size:clamp(1.8rem,3vw,2.7rem);margin-bottom:.3em}
+  #footware .copy>p{margin-bottom:.6em}
+  #footware .out{min-height:2.6em;margin-top:6px}
+}
+@media (min-width:901px) and (max-height:800px){
+  .leg{max-width:200px}
+  #footware .eyebrow{margin-bottom:8px}
+  #footware .copy{font-size:.94em}
+  #footware .lab .tabs{margin-bottom:0}
+  .lab .fine{display:none}
+}
+@media (min-width:901px) and (max-height:800px){
   .pin{padding-top:calc(var(--top) + 6px);padding-bottom:16px}
   .h.big{font-size:clamp(1.9rem,3.4vw,3rem)}
   .shots img{aspect-ratio:2/1}
