@@ -494,3 +494,60 @@ figcaption{font-size:.74rem;color:var(--dim);margin-top:6px;line-height:1.4}
 
 /* sections far below the screen skip their paint work until you get near them */
 .band .wrap>*{contain:layout style}
+
+/* ═════════ phone and tablet polish, and easier use for everyone ═════════ */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+.brand{position:relative}.brand::after{content:"";position:absolute;inset:-6px}
+.more .link,.foot-links a{display:inline-block;padding:11px 0}
+.credit a{display:inline-block;padding:8px 0}
+.foot-links{gap:0 22px}
+.lb-x{min-height:44px}
+figcaption{font-size:.8rem}
+.eyebrow{font-size:.78rem}
+@media (max-width:900px){
+  /* the progress pill: there while you scroll, out of the way while you read */
+  .trail.is-idle{opacity:0;pointer-events:none;transform:translate(-50%,16px)}
+  .trail-s::after{content:"";position:absolute;inset:-9px 0}
+  .trail-t{font-size:.7rem}
+  .foot{padding-bottom:104px}
+  .kick{white-space:normal;line-height:1.5}
+  .jug-cap{font-size:.7rem}
+  .home-act .hint{display:flex}
+  .video-c{font-size:.78rem}
+  .tile-sub a{padding:10px 14px}
+  .chip,.word,.btn-q{min-height:46px}
+}
+@media (max-width:700px){
+  .kick{font-size:.68rem;letter-spacing:.1em}
+  .ball b{font-size:.64rem}
+  .door{min-height:44px}
+  .door-n{font-size:.76rem}
+  .home-act{gap:12px}.home-act .hint{font-size:.78rem}
+  .clip h3{font-size:1.6rem}.clip p{font-size:.98rem}.clip-m{font-size:.76rem}
+  .video{border-radius:14px}.play{width:68px;height:68px}
+  .work figcaption{font-size:.9rem}
+  .fine{font-size:.86rem}
+  .stage-tag{font-size:.8rem}
+  .pull cite{font-size:.76rem}
+  .colo li{font-size:.94rem}
+  .foot-fine{font-size:.82rem;line-height:1.6}
+}
+/* short phones: the chapter list must fit on one screen */
+@media (max-width:700px) and (max-height:800px){
+  .jug{height:35dvh}.man{height:29dvh}.arc{width:min(88%,40dvh)}
+  .home h1{font-size:clamp(2.4rem,10vw,3.4rem)}
+  .tag{font-size:1.3rem;margin-bottom:.3em}
+  .door{min-height:40px;padding:1px 0}.slot{width:28px;height:28px}
+  .lede{font-size:.92rem}
+}
+.credit a{border-bottom:0;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:5px}
+p>.link:only-child{display:inline-block;padding:11px 0}
+@media (max-width:700px){
+  .jug{height:36dvh}.man{height:30dvh}.arc{width:min(90%,41dvh)}
+  .door{min-height:42px}
+}
+@media (max-width:700px) and (max-height:800px){
+  .jug{height:33dvh}.man{height:27dvh}.arc{width:min(86%,37dvh)}
+  .door{min-height:39px}
+}

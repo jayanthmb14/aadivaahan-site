@@ -36,17 +36,18 @@
     menu.hidden = !open; menuBtn.setAttribute('aria-expanded', open);
     $('span', menuBtn).textContent = open ? 'Close' : 'Chapters';
     document.body.style.overflow = open ? 'hidden' : '';
+    if (open) { var first = $('a', menu); if (first) first.focus({ preventScroll: true }); } else if (menu.contains(document.activeElement)) menuBtn.focus();
   }
   menuBtn.addEventListener('click', function () { setMenu(menu.hidden); });
   menu.addEventListener('click', function (e) { if (e.target.closest('a')) setMenu(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { setMenu(false); closeLb(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); menuBtn.focus(); } closeLb(); } });
   $('#yr').textContent = new Date().getFullYear();
 
   /* ───── small interactives ───── */
   function group(sel, attr, fn) {
     var bs = $$(sel);
-    bs.forEach(function (b) { b.addEventListener('click', function () {
-      bs.forEach(function (x) { x.classList.toggle('is-on', x === b); });
+    bs.forEach(function (b) { b.setAttribute('aria-pressed', b.classList.contains('is-on')); b.addEventListener('click', function () {
+      bs.forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', x === b); });
       fn(b.getAttribute(attr), b);
     }); });
   }
@@ -96,7 +97,7 @@
   $$('.video[data-yt]').forEach(function (v) {
     v.addEventListener('click', function () {
       var f = document.createElement('iframe');
-      f.src = 'https://www.youtube-nocookie.com/embed/' + v.getAttribute('data-yt') + '?autoplay=1&rel=0';
+      f.src = 'https://www.youtube-nocookie.com/embed/' + v.getAttribute('data-yt') + '?autoplay=1&rel=0&playsinline=1';
       f.title = (v.getAttribute('data-title') || 'Video') + ', Vivek Chaturvedi';
       f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
       v.textContent = ''; v.appendChild(f);
@@ -104,9 +105,10 @@
   });
 
   var lb = $('#lightbox'), lbImg = $('img', lb);
-  function closeLb() { lb.hidden = true; lbImg.removeAttribute('src'); }
+  var lbFrom = null;
+  function closeLb() { if (lb.hidden) return; lb.hidden = true; lbImg.removeAttribute('src'); if (lbFrom) { lbFrom.focus({ preventScroll: true }); lbFrom = null; } }
   $$('.work-b').forEach(function (b) { b.addEventListener('click', function () {
-    lbImg.src = b.getAttribute('data-full'); lbImg.alt = $('img', b).alt; lb.hidden = false;
+    lbImg.src = b.getAttribute('data-full'); lbImg.alt = $('img', b).alt; lb.hidden = false; lbFrom = b; $('.lb-x', lb).focus();
   }); });
   lb.addEventListener('click', closeLb);
 
@@ -495,10 +497,13 @@
     if (yearsEl && mid > Y.top - h && mid < Y.top + Y.h + h) yearsEl.style.setProperty('--yp', clamp((mid - Y.top) / Y.h, 0, 1).toFixed(3));
     drawRiver(mid);
   }
-  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  var trail = $('#trail'), idleT = 0;
+  function wake() { trail.classList.remove('is-idle'); clearTimeout(idleT); idleT = setTimeout(function () { if (!trail.matches(':hover') && !trail.contains(document.activeElement)) trail.classList.add('is-idle'); }, 1800); }
+  trail.addEventListener('focusin', wake);
+  window.addEventListener('scroll', function () { wake(); if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
   $$('[data-setshape]').forEach(function (b) { b.addEventListener('click', function () {
-    $$('[data-setshape]').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+    $$('[data-setshape]').forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', x === b); });
     if (cloud) cloud.show(b.getAttribute('data-setshape'));
   }); });
   var quakeOut = $('#quakeOut'), pluckOut = $('#pluckOut');
