@@ -348,6 +348,11 @@ figcaption{font-size:.74rem;color:var(--dim);margin-top:6px;line-height:1.4}
 .sand .lead{margin:.6em auto 0}
 .ways{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:38px;text-align:left;width:100%}
 .way{border:1px solid var(--line);border-radius:24px;padding:28px 26px;text-decoration:none;display:flex;flex-direction:column;gap:10px;background:color-mix(in srgb,var(--bg) 88%,transparent);transition:transform .5s var(--settle),border-color .3s}
+/* three ways in, three dyes: turmeric, indigo-teal, madder */
+.way:nth-child(1){--acc:var(--c-healing)}
+.way:nth-child(2){--acc:var(--c-coaching)}
+.way:nth-child(3){--acc:var(--c-art)}
+.way{border-color:color-mix(in srgb,var(--acc) 38%,var(--line));border-top:3px solid var(--acc);background:linear-gradient(color-mix(in srgb,var(--acc) 15%,var(--bg)),color-mix(in srgb,var(--acc) 5%,var(--bg)) 70%)}
 .way:hover{transform:translateY(-8px);border-color:var(--acc)}
 .way h3{font-size:clamp(2.2rem,3.4vw,3.4rem);color:var(--acc)}
 .way p{font-size:.95rem;color:var(--mut);flex:1}
@@ -370,8 +375,8 @@ figcaption{font-size:.74rem;color:var(--dim);margin-top:6px;line-height:1.4}
 .foot-links{display:flex;flex-wrap:wrap;gap:8px 22px;max-width:none;margin-bottom:26px}
 .foot-links a{color:var(--acc)}
 .foot-fine{font-size:.76rem;color:var(--dim);max-width:none;margin-bottom:16px}
-.credit{font-size:.76rem;color:var(--dim);max-width:none}
-.credit a{color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line)}
+.credit{font-size:.88rem;color:var(--mut);max-width:none;text-align:center;margin-top:34px;padding-top:22px;border-top:1px solid var(--line);letter-spacing:.02em}
+.credit a{color:var(--ink);font-weight:500;text-decoration:none;border-bottom:1px solid var(--acc)}
 .credit a:hover{color:var(--acc);border-color:var(--acc)}
 
 /* ── reveals: each line arrives once and stays ── */
