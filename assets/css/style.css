@@ -61,8 +61,11 @@ main{position:relative}
 .brand-m{font-family:var(--deva);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--on);font-size:1.05rem;padding-top:3px;transition:background-color .8s}
 .crumb{flex:1;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .8s}
 .ctl{display:flex;gap:8px;margin-left:auto}
-.lamp,.menu-b{height:46px;min-width:46px;padding:0 14px 0 10px;border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--bg) 90%,transparent);transition:border-color .3s,background-color .3s}
-.lamp:hover,.menu-b:hover{border-color:var(--acc)}
+.lamp,.menu-b,.mail-b{height:46px;min-width:46px;padding:0 14px 0 10px;border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--bg) 90%,transparent);transition:border-color .3s,background-color .3s}
+.lamp:hover,.menu-b:hover,.mail-b:hover{border-color:var(--acc)}
+.mail-b{text-decoration:none;text-transform:none!important;letter-spacing:.02em!important;font-size:.86rem!important}
+.mail-b svg{width:24px;height:24px;fill:none;stroke:var(--acc);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:1180px){.mail-b span{display:none}.mail-b{padding:0 10px!important}}
 .lamp svg,.menu-b svg{width:26px;height:26px;fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .lamp .flame{fill:var(--acc);stroke:var(--acc);transform-origin:16px 16px;animation:flick 3.2s var(--breath) infinite}
 .lamp .rays{stroke:var(--acc);transition:opacity .5s}
@@ -114,6 +117,7 @@ html[data-theme="light"] .lamp .rays{opacity:0}
 .tile-n{font-size:.75rem;color:var(--acc);letter-spacing:.14em}
 .tile-t{font-family:var(--serif);font-size:1.9rem;line-height:1}
 .tile-s{font-size:.78rem;color:var(--dim)}
+.tile-d{font-size:.86rem;line-height:1.45;color:var(--mut);margin-top:12px;max-width:none}
 .tile-sub{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .tile-sub a{font-size:.8rem;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--mut)}
 .tile-sub a:hover{border-color:var(--acc);color:var(--ink)}
