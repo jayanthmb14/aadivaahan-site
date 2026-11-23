@@ -91,7 +91,16 @@
     'Last, the brain floats in fluid. A cushion that slows it down gently.']);
   function swap(sel, i) { $$(sel + ' > img').forEach(function (im, k) { im.classList.toggle('is-on', k === +i); }); }
   $$('[data-who]').forEach(function (b) { b.addEventListener('click', function () { swap('#whoPlate', b.getAttribute('data-who')); }); });
-  group('[data-bone]', 'data-bone', function (i) { swap('#bonePlate', i); });
+  $$('[data-spots]').forEach(function (f) {                 // numbered points on a picture
+    var out = $('.spot-out', f), bs = $$('.spot', f);
+    bs.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.classList.contains('is-on'));
+      b.addEventListener('click', function () {
+        bs.forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', x === b); });
+        out.textContent = b.getAttribute('data-t');
+      });
+    });
+  });
   $$('[data-gal]').forEach(function (g) {
     var main = $('.gal-main', g), cap = $('.gal-cap', g), bs = $$('.thumbs button', g);
     bs.forEach(function (b) {

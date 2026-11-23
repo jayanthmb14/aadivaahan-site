@@ -679,3 +679,20 @@ html[data-theme="light"] .plate>img,html[data-theme="light"] .gal-main{box-shado
 @media (prefers-reduced-motion:reduce){.g-orbit,.g-in{animation:none}}
 
 @media (max-width:700px){.jug-cap{display:none}}
+
+/* pictures with numbered points: tap a number, read its line */
+.spot-box{position:relative;display:inline-block;max-width:100%;line-height:0}
+.spot-box>img{display:block;max-width:100%;max-height:64vh;width:auto;height:auto;border-radius:22px;border:1px solid var(--line);box-shadow:0 26px 70px rgba(0,0,0,.42);background:#000}
+.spot{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;display:grid;place-items:center;font:600 .86rem/1 var(--sans);color:#fff;background:rgba(12,10,8,.74);border:2px solid var(--acc);transition:background-color .3s,color .3s,transform .4s var(--settle)}
+html[data-theme="light"] .spot{border-color:#f5cf3a}
+.spot::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1.5px solid #f5cf3a;opacity:0;animation:ping 2.8s ease-out infinite}
+.spot:nth-of-type(2)::after{animation-delay:.5s}.spot:nth-of-type(3)::after{animation-delay:1s}.spot:nth-of-type(4)::after{animation-delay:1.5s}.spot:nth-of-type(5)::after{animation-delay:2s}
+.spot:hover{transform:scale(1.15)}
+.spot.is-on{background:#f5cf3a;color:#14100a;border-color:#f5cf3a}
+.spot.is-on::after{animation:none}
+@keyframes ping{0%{transform:scale(.6);opacity:.85}70%,100%{transform:scale(1.5);opacity:0}}
+.plate.spots figcaption{max-width:52ch}
+.spot-out{display:block;color:var(--ink);font-size:.98rem;line-height:1.45;min-height:4.4em}
+.spot-src{display:block;margin-top:4px}
+@media (max-width:900px){.spot-box>img{max-height:46vh}.spot-out{min-height:5.8em}}
+@media (min-width:901px) and (max-height:800px){.spot-box>img{max-height:56vh}}
