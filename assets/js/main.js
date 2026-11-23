@@ -43,6 +43,13 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); menuBtn.focus(); } closeLb(); } });
   $('#yr').textContent = new Date().getFullYear();
 
+  /* ───── the loading screen: stays for a beat, leaves when the page is ready ───── */
+  (function () {
+    var least = root.classList.contains('gate-on') ? 1300 : 650;
+    function off() { setTimeout(function () { root.classList.remove('ld'); }, Math.max(0, least - performance.now())); }
+    if (REDUCED) root.classList.remove('ld'); else if (document.readyState === 'complete') off(); else window.addEventListener('load', off);
+  })();
+
   /* ───── the opening screen ───── */
   var gateGo = $('#gateGo');
   function jump(hash) { var t = hash && $(hash); window.scrollTo({ top: t ? t.getBoundingClientRect().top + window.scrollY : 0, behavior: 'instant' }); }
