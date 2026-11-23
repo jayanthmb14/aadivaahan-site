@@ -781,3 +781,6 @@ html:not(.ld) .gate-on .gate-h{animation:ldUp .7s var(--settle) 1.25s backwards}
   .door{margin-top:calc(var(--mw) * .3)}
   .orbit{width:calc(100cqw - 56px);left:calc((var(--mw) - 100cqw + 56px) / 2);top:calc(var(--mw) * -.38 - 30px);height:calc(var(--mw) * 1.68 + 62px)}
 }}
+/* revision 8: the word's circle shares its centre with the arch (the path's centre is 57.6% down its box, not 41%) */
+.arc{top:calc(var(--mw) * -.329)}
+@media (max-width:900px){.arc{top:calc(var(--mw) * -.329)}}
