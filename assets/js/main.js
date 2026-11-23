@@ -43,6 +43,11 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); menuBtn.focus(); } closeLb(); } });
   $('#yr').textContent = new Date().getFullYear();
 
+  if (window.vcReload) {                                      // a refresh starts again from the opening screen
+    var top0 = function () { window.scrollTo({ top: 0, behavior: 'instant' }); };
+    top0(); window.addEventListener('load', function () { top0(); setTimeout(top0, 60); });
+  }
+
   /* ───── the loading screen: stays for a beat, leaves when the page is ready ───── */
   (function () {
     var least = root.classList.contains('gate-on') ? 1300 : 650;
