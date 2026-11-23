@@ -1,6 +1,6 @@
-/* Vivek Chaturvedi · v4
-   One cloud of points follows the scroll: it holds its shape while you read,
-   and turns into the next figure as the next chapter arrives. Scroll back and it goes back. */
+/* Vivek Chaturvedi · v5
+   An opening screen, then one page. Real pictures sit beside the words;
+   a small figure made of dots of light lives inside each chapter's circle. */
 (function () {
   'use strict';
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -10,7 +10,7 @@
   var clamp = function (v, a, b) { return v < a ? a : v > b ? b : v; };
   var smooth = function (t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
   var lerp = function (a, b, t) { return a + (b - a) * t; };
-  var NAMES = { home: 'Vivek Chaturvedi', healing: '01 / Healing', coaching: '02 / Coaching', design: '03 / Design', about: '04 / About', art: '05 / Art', music: '06 / Music', sandbox: '07 / The sandbox' };
+  var NAMES = { home: '', healing: '01 / Healing', coaching: '02 / Coaching', design: '03 / Design', about: '04 / About', art: '05 / Art', music: '06 / Music', sandbox: '07 / The sandbox' };
 
   /* ───── reveals ───── */
   $$('.copy, .wrap, .wall-txt, .sand-in, .two > div, .years, .works, .clips, .quotes').forEach(function (g) {
@@ -43,6 +43,24 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); menuBtn.focus(); } closeLb(); } });
   $('#yr').textContent = new Date().getFullYear();
 
+  /* ───── the opening screen ───── */
+  var gateGo = $('#gateGo');
+  function jump(hash) { var t = hash && $(hash); window.scrollTo({ top: t ? t.getBoundingClientRect().top + window.scrollY : 0, behavior: 'instant' }); }
+  function enter(hash) {
+    if (!root.classList.contains('gate-on') || root.classList.contains('gate-out')) return;
+    try { sessionStorage.setItem('vc-in', '1'); } catch (e) {}
+    root.classList.add('gate-out');
+    setTimeout(function () { root.classList.remove('gate-on', 'gate-out'); layout(); if (hash) jump(hash); $('#brand').focus({ preventScroll: true }); }, REDUCED ? 0 : 440);
+  }
+  gateGo.addEventListener('click', function () { enter(''); });
+  $$('.g-ball').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); enter(a.getAttribute('href')); }); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') enter(''); });
+  if (root.classList.contains('gate-on')) gateGo.focus({ preventScroll: true });
+  $('#brand').addEventListener('click', function (e) {        // the Om: back to the top; press it again there and the opening returns
+    e.preventDefault();
+    if (window.scrollY < 40) { root.classList.add('gate-on'); gateGo.focus({ preventScroll: true }); } else jump('');
+  });
+
   /* ───── small interactives ───── */
   function group(sel, attr, fn) {
     var bs = $$(sel);
@@ -71,6 +89,76 @@
     'Skin is next. The scalp moves a little over the bone, which turns a sharp twist into a softer one.',
     'Only now comes the hard part. The skull is a curved shell of bone that spreads the load.',
     'Last, the brain floats in fluid. A cushion that slows it down gently.']);
+  function swap(sel, i) { $$(sel + ' > img').forEach(function (im, k) { im.classList.toggle('is-on', k === +i); }); }
+  $$('[data-who]').forEach(function (b) { b.addEventListener('click', function () { swap('#whoPlate', b.getAttribute('data-who')); }); });
+  group('[data-bone]', 'data-bone', function (i) { swap('#bonePlate', i); });
+  $$('[data-gal]').forEach(function (g) {
+    var main = $('.gal-main', g), cap = $('.gal-cap', g), bs = $$('.thumbs button', g);
+    bs.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.classList.contains('is-on'));
+      b.addEventListener('click', function () {
+        bs.forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', x === b); });
+        var src = b.getAttribute('data-src'); if (main.getAttribute('src') === src) return;
+        main.classList.add('is-out');
+        var im = new Image(); im.onload = im.onerror = function () { main.src = src; main.alt = (b.getAttribute('aria-label') || '').replace(/^Show /, ''); cap.textContent = b.getAttribute('data-cap'); main.classList.remove('is-out'); }; im.src = src;
+      });
+    });
+  });
+
+  /* thoughts from the Spiralin deck */
+  var PROMPTS = [
+    ['The body is the book of revelation.', 'Everything written in you is already there. You have simply forgotten how to read it.'],
+    ['There is a place inside you that has never been hurt.', 'It existed before your name, before language, before a culture’s demand for performance.'],
+    ['The path inward begins with five fingertips.', 'The First Exercise requires only the willingness to feel precisely what is already there.'],
+    ['Spiralin means spiralling in.', 'Back through the training, the learned responses, and the pain that was never fully felt. Not up, not out, not forward. In.'],
+    ['Nowhere. Now here.', 'The body knows the difference. The mind never will.'],
+    ['All paths spiral down to the same origin.', 'Whether you seek integration, ground or release, the process is the same: stripping away what does not belong, to reveal what has always been there.'],
+    ['The gem is already there.', '“The only work that any of us have, truly, is a constant process of refinement. We are simply polishing it.”'],
+    ['The path inward leads all the way home.', 'It begins right now. With the tips of your own fingers.']];
+  var prBox = $('#prompts'), prT = $('#promptT'), prS = $('#promptS'), prN = $('#promptN'), prI = 0;
+  function prompt(d) {
+    prI = (prI + d + PROMPTS.length) % PROMPTS.length; prT.textContent = PROMPTS[prI][0]; prS.textContent = PROMPTS[prI][1]; prN.textContent = (prI + 1) + ' / ' + PROMPTS.length;
+    prBox.classList.remove('is-turn'); void prBox.offsetWidth; prBox.classList.add('is-turn');
+  }
+  $('#promptNext').addEventListener('click', function () { prompt(1); });
+  $('#promptPrev').addEventListener('click', function () { prompt(-1); });
+
+  /* the redwoods: press the button and the real picture sways, from the ground up, then settles */
+  var treeBox = $('#treeBox'), treeC = $('#treeC'), treeImg = $('img', treeBox), treeRaf = 0;
+  function shakeTree() {
+    if (REDUCED || !treeImg.complete || !treeImg.naturalWidth) return;
+    var w = treeBox.clientWidth, h = treeBox.clientHeight, pr = Math.min(window.devicePixelRatio || 1, 1.5);
+    treeC.width = Math.round(w * pr); treeC.height = Math.round(h * pr);
+    var c = treeC.getContext('2d'), iw = treeImg.naturalWidth, ih = treeImg.naturalHeight, sc = Math.max(w / iw, h / ih), sw = w / sc, sh = h / sc, sx = (iw - sw) / 2, sy = (ih - sh) / 2, n = 44, t0 = performance.now();
+    cancelAnimationFrame(treeRaf); treeBox.classList.add('is-shaking');
+    (function step(now) {
+      var t = (now - t0) / 1000, amp = Math.exp(-t * 0.7) * (t < 0.3 ? t / 0.3 : 1) * w * 0.04;
+      c.setTransform(pr, 0, 0, pr, 0, 0); c.fillStyle = '#1c120a'; c.fillRect(0, 0, w, h);
+      for (var i = 0; i < n; i++) {                            // thin slices: the wave starts at the roots and runs up the trunks
+        var up = 1 - (i + 0.5) / n, dx = Math.sin(t * 11 - up * 5) * amp * (0.12 + up * up) + Math.sin(t * 27) * amp * 0.1;
+        c.drawImage(treeImg, sx, sy + i / n * sh, sw, sh / n + 1, dx - w * 0.05, i / n * h, w * 1.1, h / n + 1);
+      }
+      if (t < 6.5) treeRaf = requestAnimationFrame(step); else treeBox.classList.remove('is-shaking');
+    })(t0);
+  }
+
+  /* write to Vivek */
+  var cform = $('#cform'), cout = $('#cformOut'), ctopic = $('#ctopic');
+  $$('[data-topic]').forEach(function (a) { a.addEventListener('click', function () { ctopic.value = a.getAttribute('data-topic'); }); });
+  cform.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var fd = new FormData(cform), own = 'mailto:vivek@aadivaahan.com?subject=' + encodeURIComponent(fd.get('topic')) + '&body=' + encodeURIComponent(fd.get('message') + '\n\n' + fd.get('name'));
+    cform.classList.add('is-busy'); cout.textContent = 'Sending…';
+    fetch(cform.getAttribute('action'), { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.ok) throw 0; cform.reset(); cout.textContent = 'Sent. Thank you. Vivek will reply by email.'; })
+      .catch(function () {
+        cout.textContent = 'That did not go through. ';
+        var a = document.createElement('a'); a.className = 'link'; a.href = own; a.textContent = 'Send it from your own email instead'; cout.appendChild(a);
+      })
+      .then(function () { cform.classList.remove('is-busy'); });
+  });
+
   var FOOT = { heel: 'Heel first: the hit goes straight up the bones. Shin, knee, hip. The springs of the leg barely join in.',
     toe: 'Toes first: the arch and the calf stretch like springs. They soak up the landing and hand the energy back for the next step.' };
   var footLab = $('#footLab'), footOut = $('#footOut');
@@ -181,10 +269,10 @@
 
   /* ───── the cloud (plain WebGL, no library) ───── */
   function initCloud() {
-    var canvas = $('#cloud'), gl = null, N = 16000, VER = '7';
+    var canvas = $('#cloud'), gl = null, N = 14000;
     try { gl = canvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'high-performance' }); } catch (e) {}
     if (!gl) return null;
-    var PR = 1;
+    var PR = 1, tier = 0, gapAvg = 16, gapN = 0;       // tier: 0 full, 1 lighter, 2 lightest (old or slow machines step down by themselves)
     var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     var shapes = {};                                           // name -> { pos, col, pb, cb }
     function make(name, fn) {
@@ -195,38 +283,44 @@
     function rgb(o, r, g, b, k) { o[3] = r * k; o[4] = g * k; o[5] = b * k; }
     var TAU = Math.PI * 2;
     make('galaxy', function (i, o) {                         // spiralling in
-      var t = Math.pow(rnd(), 0.62), arm = i % 2, r = 0.05 + t * 1.75, a = Math.log(r / 0.05) * 2.35 + arm * Math.PI + (rnd() - 0.5) * (0.55 - t * 0.25), sp = (rnd() - 0.5) * 0.16 * (0.4 + t);
-      o[0] = Math.cos(a) * (r + sp); o[1] = Math.sin(a) * (r + sp) * 0.62; o[2] = (rnd() - 0.5) * 0.35 * (1.2 - t) + Math.sin(a) * r * 0.28;
+      var t = Math.pow(rnd(), 0.62), arm = i % 2, r = 0.05 + t * 1.75, a = Math.log(r / 0.05) * 2.35 + arm * Math.PI + (rnd() - 0.5) * (0.14 - t * 0.05), sp = (rnd() - 0.5) * 0.05 * (0.4 + t);
+      o[0] = Math.cos(a) * (r + sp); o[1] = Math.sin(a) * (r + sp) * 0.62; o[2] = (rnd() - 0.5) * 0.1 * (1.2 - t) + Math.sin(a) * r * 0.28;
       var h = 1 - t; o[3] = 1; o[4] = 0.55 + h * 0.4; o[5] = 0.16 + h * 0.55;
     });
     make('coil', function (i, o) {                           // a conch: the spiral that returns to centre
-      var t = rnd(), a = t * TAU * 5.5, r = 0.08 + 1.15 * Math.pow(1 - t, 1.25), tube = 0.03 + 0.07 * (1 - t), ja = rnd() * TAU, jr = Math.sqrt(rnd()) * tube;
+      var t = rnd(), a = t * TAU * 5.5, r = 0.08 + 1.15 * Math.pow(1 - t, 1.25), tube = 0.012 + 0.03 * (1 - t), ja = rnd() * TAU, jr = Math.sqrt(rnd()) * tube;
       o[0] = Math.cos(a) * r + Math.cos(ja) * jr; o[2] = Math.sin(a) * r + Math.sin(ja) * jr; o[1] = -0.95 + t * 1.9 + Math.sin(ja) * jr;
-      rgb(o, 0.42 + t * 0.55, 0.86 + t * 0.14, 0.78 + t * 0.2, 0.75 + 0.25 * rnd());
+      rgb(o, 1, 0.96, 0.84, 0.75 + 0.25 * rnd());
     });
     make('wheel', function (i, o) {                          // time to reinvent the wheel
-      var k = rnd(), a, r, z = (rnd() - 0.5) * 0.16;
-      if (k < 0.46) { a = rnd() * TAU; r = 1 + (rnd() - 0.5) * 0.13; }
+      var k = rnd(), a, r, z = (rnd() - 0.5) * 0.06;
+      if (k < 0.46) { a = rnd() * TAU; r = 1 + (rnd() - 0.5) * 0.05; }
       else if (k < 0.58) { a = rnd() * TAU; r = Math.sqrt(rnd()) * 0.2; z *= 1.6; }
-      else { a = Math.floor(rnd() * 12) / 12 * TAU + (rnd() - 0.5) * 0.035; r = 0.2 + rnd() * 0.78; z *= 0.5; }
-      o[0] = Math.cos(a) * r; o[1] = Math.sin(a) * r; o[2] = z; rgb(o, 1, 0.56 + 0.3 * rnd(), 0.28, 0.7 + 0.3 * rnd());
+      else { a = Math.floor(rnd() * 12) / 12 * TAU + (rnd() - 0.5) * 0.012; r = 0.2 + rnd() * 0.78; z *= 0.5; }
+      o[0] = Math.cos(a) * r; o[1] = Math.sin(a) * r; o[2] = z; rgb(o, 1, 0.95, 0.8, 0.7 + 0.3 * rnd());
     });
     make('lifeline', function (i, o) {                       // one line, six loops, one bead for each life
-      var bead = i % 9 === 0, u = bead ? (Math.floor(rnd() * 6) + 0.5) / 6 : rnd(), th = u * TAU * 6, R = 0.3, j = bead ? 0.07 : 0.022;
+      var bead = i % 9 === 0, u = bead ? (Math.floor(rnd() * 6) + 0.5) / 6 : rnd(), th = u * TAU * 6, R = 0.3, j = bead ? 0.06 : 0.012;
       o[0] = -1.45 + 2.9 * u + R * Math.sin(th) + (rnd() - 0.5) * j; o[1] = R * (1 - Math.cos(th)) - 0.3 + 0.35 * Math.sin(u * Math.PI) + (rnd() - 0.5) * j; o[2] = Math.sin(th) * 0.22 + (rnd() - 0.5) * j;
-      if (bead) rgb(o, 1, 0.82, 0.45, 1); else rgb(o, 0.5, 0.68, 1, 0.65 + 0.35 * rnd());
+      if (bead) rgb(o, 1, 0.8, 0.4, 1); else rgb(o, 1, 0.97, 0.9, 0.7 + 0.3 * rnd());
     });
     var PAL = [[1, 0.36, 0.52], [1, 0.72, 0.2], [0.36, 0.5, 1], [0.5, 0.92, 0.6], [1, 0.3, 0.22], [0.8, 0.5, 1]];
     make('brush', function (i, o) {                          // loose strokes, after his paintings
-      var s = i % 6, t = rnd(), ph = s * 1.7, w = 0.05 + 0.1 * Math.sin(t * Math.PI), c = PAL[s];
+      var s = i % 6, t = rnd(), ph = s * 1.7, w = 0.02 + 0.05 * Math.sin(t * Math.PI), c = PAL[s];
       var x = -1.3 + 2.6 * t, y = 0.55 * Math.sin(t * 5.2 + ph) + (s - 2.5) * 0.24 + 0.25 * Math.sin(t * 11 + ph * 2);
       o[0] = x + (rnd() - 0.5) * w; o[1] = y * 0.85 + (rnd() - 0.5) * w * 2.2; o[2] = 0.3 * Math.cos(t * 6 + ph) + (rnd() - 0.5) * 0.08;
-      rgb(o, c[0], c[1], c[2], 0.6 + 0.4 * rnd());
+      rgb(o, 0.5 + c[0] * 0.5, 0.5 + c[1] * 0.5, 0.5 + c[2] * 0.5, 0.7 + 0.3 * rnd());
     });
     make('strings', function (i, o) {                        // four strings, ready to be plucked
       var s = i % 4, x = -1.5 + 3 * rnd(), end = Math.abs(x) > 1.44;
       o[0] = x; o[1] = (s - 1.5) * 0.36 + (rnd() - 0.5) * (end ? 0.2 : 0.012 + s * 0.006); o[2] = (rnd() - 0.5) * 0.03;
-      rgb(o, 1, 0.78, 0.32, 0.6 + 0.4 * rnd());
+      rgb(o, 1, 0.94, 0.78, 0.6 + 0.4 * rnd());
+    });
+    make('rings', function (i, o) {                          // three rings round one bright centre: innocence, courage, unfearing
+      if (i % 9 === 0) { var ca = rnd() * TAU, cr = Math.sqrt(rnd()) * 0.1; o[0] = Math.cos(ca) * cr; o[1] = Math.sin(ca) * cr; o[2] = (rnd() - 0.5) * 0.05; rgb(o, 1, 0.9, 0.6, 1); return; }
+      var c = i % 3, a = rnd() * TAU, ph = Math.PI / 2 + c * TAU / 3, j = 0.014;
+      o[0] = Math.cos(ph) * 0.4 + Math.cos(a) * 0.64 + (rnd() - 0.5) * j; o[1] = Math.sin(ph) * 0.4 + Math.sin(a) * 0.64 + (rnd() - 0.5) * j; o[2] = Math.sin(a + c) * 0.1;
+      rgb(o, 1, 0.95, 0.8, 0.7 + 0.3 * rnd());
     });
     var rand = new Float32Array(N * 3); for (var i = 0; i < N * 3; i++) rand[i] = Math.random() * 2 - 1;
 
@@ -238,8 +332,8 @@
       '  float e = d * d * (3. - 2. * d);',
       '  vec3 p = mix(aPosA, aPosB, e);',
       '  float mid = sin(e * 3.14159);',
-      '  p += aRand * mid * .28 * uScat;',
-      '  p.xy += vec2(cos(uTime * .6 + aRand.y * 6.), sin(uTime * .5 + aRand.z * 6.)) * .01;',
+      '  p += aRand * mid * .1 * uScat;',
+      '  p.xy += vec2(cos(uTime * .6 + aRand.y * 6.), sin(uTime * .5 + aRand.z * 6.)) * .005;',
       '  p.x += sin(uTime * 13. + p.y * 2.2) * uShake * (p.y + 1.1) * .11;',
       '  p.y += sin((p.x + 1.5) * 2.0944) * sin(uTime * 34. + p.y * 9.) * uPluck * .16;',
       '  vCol = mix(aColA, aColB, e); vFade = 1. - mid * .35 * uScat;',
@@ -280,39 +374,16 @@
     var S = { busyAt: 0, W: 1, H: 1, pair: -2, mix: 0, target: 0, mx: 0, my: 0, shakeAt: -1e9, pluckAt: -1e9, live: true, local: null, k: 0, count: N, size: 2.2, dirty: true, vh: 1, vw: 1 };
     var P = new Float32Array(16), MV = new Float32Array(16); MV[15] = 1;
 
-    /* figures sampled from pictures arrive one small file at a time, in the order the page needs them */
-    function got(name, bufr) {
-      var p = new Int16Array(bufr, 0, N * 3), c = new Uint8Array(bufr, N * 6, N * 3), pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
-      for (var i = 0; i < N * 3; i++) { pos[i] = p[i] / 8000; col[i] = c[i] / 255; }
-      shapes[name] = { pos: pos, col: col }; if (ok) upload(shapes[name]);
-      S.pair = -2; S.dirty = true; S.busyAt = performance.now();  // if it is on screen now, show it
-    }
-    var want = [], asked = {};
-    stages.forEach(function (s) { if (!shapes[s.shape] && want.indexOf(s.shape) < 0) want.push(s.shape); });
-    $$('[data-setshape]').forEach(function (b) { var n = b.getAttribute('data-setshape'); if (!shapes[n] && want.indexOf(n) < 0) want.push(n); });
-    function ask(name) {
-      if (asked[name] || shapes[name]) return Promise.resolve(); asked[name] = 1;
-      return fetch('assets/pts/' + name + '.bin?v=' + VER).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (b) { got(name, b); });
-    }
-    function fromScript() {                                    // opened straight from a folder (no server): fall back to the one big file
-      if (fromScript.done) return; fromScript.done = 1;
-      var sc = document.createElement('script'); sc.src = 'assets/js/points.js';
-      sc.onload = function () { Object.keys(window.SHAPES || {}).forEach(function (k) {
-        var o = window.SHAPES[k], bin = atob(o.p) + atob(o.c), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-        got(k, u.buffer); }); window.SHAPES = null; };
-      document.head.appendChild(sc);
-    }
-    (function next() { var n = want.shift(); if (n) ask(n).then(next, location.protocol === 'file:' ? fromScript : next); })();
-    function shp(name) { if (!shapes[name]) { ask(name).catch(function () {}); return shapes.galaxy; } return shapes[name]; }
+    function shp(a, b) { return shapes[a] || shapes[b] || shapes.galaxy; }   // a stage with a real picture has no figure: 'none'
 
     function setPair(a, b) {
-      var A = shp(a), B = shp(b);
+      var A = shp(a, b), B = shp(b, a);
       point('aPosA', A.pb); point('aColA', A.cb); point('aPosB', B.pb); point('aColB', B.cb);
     }
     function measure() {
       S.W = window.innerWidth; S.H = window.innerHeight;
       // full sharpness on phones, tablets and laptops; only very large retina screens (5K and up) are held to about 7 million pixels
-      PR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(7e6 / (S.W * S.H))));
+      PR = Math.max(1, Math.min(window.devicePixelRatio || 1, tier ? 1 : 2, Math.sqrt(7e6 / (S.W * S.H))));
       var w = Math.round(S.W * PR), h = Math.round(S.H * PR);
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       gl.viewport(0, 0, w, h);
@@ -321,14 +392,15 @@
       S.vh = 2 * 7 * Math.tan(35 * Math.PI / 360); S.vw = S.vh * S.W / S.H;
       var y = window.scrollY;
       stages.forEach(function (s) { var r = s.el.getBoundingClientRect(); s.top = r.top + y; s.bottom = r.bottom + y; });
-      S.count = S.W < 700 ? Math.floor(N * 0.6) : N; S.size = (S.W < 700 ? 1.9 : 2.2) * PR; S.dirty = true;
+      S.count = Math.floor(N * (S.W < 700 ? 0.6 : 1) * [1, 0.5, 0.28][tier]); S.size = (S.W < 700 ? 1.9 : 2.2) * PR * [1, 1.25, 1.5][tier]; S.dirty = true;
     }
-    function place(s) {                                       // where a stage wants the figure: [x, y, scale, alpha]
+    function place(s, o) {                                    // where a stage wants the figure: [x, y, scale, alpha]
+      if (s.shape === 'none') { var q = o && o.shape !== 'none' ? place(o) : [0, 0, 1, 0]; return [q[0], q[1], q[2], 0]; }
       var vh = S.vh, vw = S.vw, narrow = S.W < 900;
       var fit = narrow ? Math.min(0.95, vw / 3.5) : Math.min(1.14, vw / 7.2), x = 0, y = 0, a = 1;
       if (s.disc) { var dr = s.disc.getBoundingClientRect(); return [((dr.left + dr.width / 2) / S.W - 0.5) * vw, (0.5 - (dr.top + dr.height / 2) / S.H) * vh, s.disc.offsetWidth / S.H * vh / 3.3 * s.scale, 1]; }
       if (s.side === 'homeleft') { x = narrow ? 0 : -vw * 0.24; y = narrow ? vh * 0.2 : -vh * 0.06; a = 0.5; }
-      else if (s.side === 'center') { a = 0.55; }
+      else if (s.side === 'center') { a = 0.4; }
       else if (narrow) { y = vh * 0.2; }
       else x = (s.side === 'left' ? -1 : 1) * vw * 0.235;
       return [x, y, fit * s.scale, a];
@@ -350,9 +422,14 @@
       if (sy !== lastY) { lastY = sy; S.busyAt = now; }
       var fast = now - prevRaf < 12; prevRaf = now;            // a 120Hz screen: when all is still, 60 pictures a second look the same
       if (!busy && fast && (skip = !skip)) return;
-      var dt = Math.min(0.05, (now - last) / 1000); last = now;
+      var gap = now - last, dt = Math.min(0.05, gap / 1000), ease = Math.min(0.3, gap / 1000); last = now;   // ease: slow machines catch up instead of crawling
       drawJuggle(dt);
       if (!ok) return;
+      if (root.classList.contains('gate-on')) { if (!blank) { gl.clear(gl.COLOR_BUFFER_BIT); blank = true; } return; }
+      if (busy && !blank && tier < 2 && gap < 400) {            // if drawing cannot keep up, use fewer dots and a lighter canvas. It never steps back up.
+        gapAvg += (gap - gapAvg) * 0.08;
+        if (++gapN > 45 && gapAvg > 30) { tier++; gapN = 0; gapAvg = 16; measure(); }
+      }
       var mid = window.scrollY + S.H * 0.5, k = 0, n = stages.length;
       for (var i = 1; i < n; i++) {
         var adj = stages[i].top - stages[i - 1].bottom < 4, w0 = adj ? stages[i].top - S.H * (S.W < 900 ? 0.42 : 0.55) : stages[i].top - S.H * 0.95;
@@ -369,16 +446,16 @@
       } else {
         if (S.pair !== k) { setPair(A.shape, B.shape); S.mix = k > S.pair ? (S.pair === -2 ? t : 0) : 1; S.pair = k; }
         scat = A.shape === B.shape ? 0 : 1;
-        S.mix += (t - S.mix) * (REDUCED ? 1 : Math.min(1, dt * 7));
+        S.mix += (t - S.mix) * (REDUCED ? 1 : Math.min(1, ease * 9));
       }
       S.dirty = false;
       var sh = (now - S.shakeAt) / 1000, shake = sh < 6 ? Math.exp(-sh * 0.75) * (sh < 0.4 ? sh / 0.4 : 1) : 0;
       var pl = (now - S.pluckAt) / 1000, pluck = pl < 5 ? Math.exp(-pl * 0.9) : 0;
-      var pA = place(A), pB = place(B), m = S.local ? 1 : S.mix, f = Math.min(1, dt * 6);
+      var pA = place(A, B), pB = place(B, A), m = S.local ? 1 : S.mix, f = Math.min(1, ease * 8);
       var tx = lerp(pA[0], pB[0], m), ty = lerp(pA[1], pB[1], m) - Math.sin(Math.PI * m) * (Math.abs(pA[0] - pB[0]) > 0.5 ? 0.55 : 0);
-      px += (tx - px) * f; py += (ty - py) * f; ps += (lerp(pA[2], pB[2], m) - ps) * f; pa += (lerp(pA[3], pB[3], m) - pa) * Math.min(1, dt * 3);
+      px += (tx - px) * f; py += (ty - py) * f; ps += (lerp(pA[2], pB[2], m) - ps) * f; pa += (lerp(pA[3], pB[3], m) - pa) * Math.min(1, ease * 5);
       var inS = 0; for (var j = 0; j < n; j++) if (mid > stages[j].top - S.H * 0.2 && mid < stages[j].bottom + S.H * 0.2) { inS = 1; break; }
-      vis += (inS - vis) * Math.min(1, dt * 5);
+      vis += (inS - vis) * Math.min(1, ease * 6);
       var alpha = pa * vis;
       var flat = B.shape === 'galaxy' && m > 0.5, sway = REDUCED ? 0 : Math.sin(now / 1000 * 0.3) * 0.32;
       var turn = lerp(A.turn, B.turn, m);
@@ -395,25 +472,21 @@
       MV[8] = d * ps; MV[9] = -b * c * ps; MV[10] = a * c * ps;
       MV[12] = px; MV[13] = py; MV[14] = -7;
       gl.uniformMatrix4fv(U.uMV, false, MV); gl.uniformMatrix4fv(U.uP, false, P);
-      gl.uniform1f(U.uMix, S.mix); gl.uniform1f(U.uTime, now / 1000 % 3600); gl.uniform1f(U.uSize, S.size); gl.uniform1f(U.uShake, shake);
-      gl.uniform1f(U.uPluck, pluck); gl.uniform1f(U.uScat, scat); gl.uniform1f(U.uAlpha, alpha); gl.uniform1f(U.uInk, light ? 1 : 0);
-      gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.POINTS, 0, S.count);
+      var onDisc = lerp(A.disc ? 1 : 0, B.disc ? 1 : 0, m), lift = light ? 1 + 0.4 * onDisc : 1;
+      gl.uniform1f(U.uInk, light ? 1 - onDisc : 0);   // on a coloured disc the figure stays light, even by day
+      gl.uniform1f(U.uMix, S.mix); gl.uniform1f(U.uTime, now / 1000 % 3600); gl.uniform1f(U.uSize, S.size * lift); gl.uniform1f(U.uShake, shake);
+      gl.uniform1f(U.uPluck, pluck); gl.uniform1f(U.uScat, scat); gl.uniform1f(U.uAlpha, alpha * lift);       gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.POINTS, 0, S.count);
     }
     requestAnimationFrame(frame);
     return {
       theme: theme, measure: measure,
-      shake: function () { S.shakeAt = performance.now(); S.busyAt = S.shakeAt + 6000; }, pluck: function () { S.pluckAt = performance.now(); S.busyAt = S.pluckAt + 5000; },
-      show: function (name) {                                  // morph the current stage to another figure
-        var s = stages[S.k]; if (s.shape === name) return;
-        ask(name).catch(function () {});
-        S.local = { k: S.k, t0: performance.now(), from: s.shape }; s.shape = name; S.mix = 0; S.dirty = true; S.busyAt = performance.now() + 1500;
-      }
+      pluck: function () { S.pluckAt = performance.now(); S.busyAt = S.pluckAt + 5000; }
     };
   }
 
   /* ───── scroll: crumb, trail, colours, thread ───── */
   var SUB = { purnam: 'Purnam', exercise: 'The first exercise', spiral: 'Spiral', idea: 'Shell, animal, bones', method: 'The method', footware: 'Footware', heavenmet: 'Heaven-met', redwood: 'The redwood', sundancer: 'Sundancer',
-    lives: 'Six lives', years: 'The years', mind: 'One mind', talk: 'The Unperformance', films: 'Films', gallery: 'The paintings', bones: 'In his bones', listen: 'Listen' };
+    connect: 'Write to Vivek', lives: 'Six lives', years: 'The years', mind: 'One mind', talk: 'The Unperformance', films: 'Films', gallery: 'The paintings', bones: 'In his bones', listen: 'Listen' };
   var ORDER = ['home', 'healing', 'coaching', 'design', 'about', 'art', 'music', 'sandbox'];
   var secs = $$('main > section[data-ch]').map(function (el) { return { el: el, ch: el.getAttribute('data-ch'), sub: '', top: 0, bottom: 0, wall: el.classList.contains('wall') ? el.querySelector('.disc') : null }; });
   secs.forEach(function (s, i) { s.sub = SUB[s.el.id] || (i && secs[i - 1].ch === s.ch && !s.wall ? secs[i - 1].sub : ''); });
@@ -502,12 +575,8 @@
   trail.addEventListener('focusin', wake);
   window.addEventListener('scroll', function () { wake(); if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
-  $$('[data-setshape]').forEach(function (b) { b.addEventListener('click', function () {
-    $$('[data-setshape]').forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', x === b); });
-    if (cloud) cloud.show(b.getAttribute('data-setshape'));
-  }); });
   var quakeOut = $('#quakeOut'), pluckOut = $('#pluckOut');
-  $('#quake').addEventListener('click', function () { if (cloud) cloud.shake(); quakeOut.textContent = 'It bends. It sways. The shaking spreads out through the trunk and fades. Nothing snaps.'; });
+  $('#quake').addEventListener('click', function () { shakeTree(); quakeOut.textContent = 'They bend. They sway. The shaking spreads up through the trunks and fades. Nothing snaps.'; });
   $('#pluck').addEventListener('click', function () { if (cloud) cloud.pluck(); pluckOut.textContent = 'Three loops ring along each string, then fade back to stillness.'; });
 
   var lastW = 0, lastH = 0;
